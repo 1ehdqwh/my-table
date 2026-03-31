@@ -15,7 +15,7 @@
 </head>
 <body>
 
-<h2>🧾 Table Maker (Improved Merge)</h2>
+<h2>🧾 Table Maker (Excel-like Merge)</h2>
 
 <label>Rows: </label>
 <input type="number" id="rows" value="3" min="1">
@@ -25,29 +25,24 @@
 
 <br>
 <button onclick="createTable()">Create Table</button>
-
 <button onclick="addRow()">+ Row</button>
 <button onclick="deleteRow()">- Row</button>
-
 <button onclick="addCol()">+ Col</button>
 <button onclick="deleteCol()">- Col</button>
-
 <button onclick="mergeCells()">Merge</button>
 <button onclick="splitCell()">Split</button>
-
 <button onclick="clearStorage()">Clear Saved</button>
 
 <table id="table"></table>
 
 <script>
 let selectedCells = [];
-const STORAGE_KEY = 'table-maker-data-v3';
+const STORAGE_KEY = 'table-maker-data-v4';
 
 function createTable() {
   const rows = rowsInput();
   const cols = colsInput();
   const table = document.getElementById('table');
-
   table.innerHTML = '';
   selectedCells = [];
 
@@ -58,7 +53,6 @@ function createTable() {
     }
     table.appendChild(tr);
   }
-
   saveTable();
 }
 
@@ -69,52 +63,37 @@ function createCell(text){
   const td = document.createElement('td');
   td.contentEditable = true;
   td.innerText = text;
-
   td.addEventListener('click', e => { e.stopPropagation(); toggleSelect(td); });
   td.addEventListener('input', saveTable);
-
   return td;
 }
 
-// ===== 行列操作 =====
+// ===== 行列 =====
 function addRow() {
   const table = document.getElementById('table');
   if (!table.rows.length) return;
-
   const cols = table.rows[0].cells.length;
   const tr = document.createElement('tr');
-
-  for (let i = 0; i < cols; i++) {
-    tr.appendChild(createCell('New'));
-  }
-
+  for (let i = 0; i < cols; i++) tr.appendChild(createCell('New'));
   table.appendChild(tr);
   saveTable();
 }
 
 function deleteRow() {
   const table = document.getElementById('table');
-  if (table.rows.length > 0) {
-    table.deleteRow(-1);
-    saveTable();
-  }
+  if (table.rows.length > 0) table.deleteRow(-1);
+  saveTable();
 }
 
 function addCol() {
   const table = document.getElementById('table');
-  for (let row of table.rows) {
-    row.appendChild(createCell('New'));
-  }
+  for (let row of table.rows) row.appendChild(createCell('New'));
   saveTable();
 }
 
 function deleteCol() {
   const table = document.getElementById('table');
-  for (let row of table.rows) {
-    if (row.cells.length > 0) {
-      row.deleteCell(-1);
-    }
-  }
+  for (let row of table.rows) if (row.cells.length) row.deleteCell(-1);
   saveTable();
 }
 
@@ -129,38 +108,51 @@ function toggleSelect(cell) {
   }
 }
 
-// ===== 合并（支持上下 & 左右） =====
+// ===== Excel风格合并（矩形） =====
 function mergeCells() {
-  if (selectedCells.length < 2) return alert('Select at least 2 cells');
+  if (selectedCells.length < 2) return alert('Select a region');
 
-  // 获取所有行列索引
-  const positions = selectedCells.map(cell => {
-    const row = cell.parentElement.rowIndex;
-    const col = cell.cellIndex;
-    return { cell, row, col };
-  });
-
-  const rows = [...new Set(positions.map(p => p.row))];
-  const cols = [...new Set(positions.map(p => p.col))];
-
-  const first = selectedCells[0];
-  let text = selectedCells.map(c => c.innerText).join(' ');
-
-  // 判断方向
-  if (rows.length === 1) {
-    // 横向合并
-    first.colSpan = selectedCells.length;
-  } else if (cols.length === 1) {
-    // 纵向合并
-    first.rowSpan = selectedCells.length;
-  } else {
-    return alert('Please select cells in one row OR one column');
+  // 不允许已有合并参与
+  if (selectedCells.some(c => c.colSpan > 1 || c.rowSpan > 1)) {
+    return alert('Cannot merge already merged cells');
   }
 
+  const positions = selectedCells.map(c => ({
+    cell: c,
+    row: c.parentElement.rowIndex,
+    col: c.cellIndex
+  }));
+
+  const rows = positions.map(p => p.row);
+  const cols = positions.map(p => p.col);
+
+  const minRow = Math.min(...rows);
+  const maxRow = Math.max(...rows);
+  const minCol = Math.min(...cols);
+  const maxCol = Math.max(...cols);
+
+  // 检查是否为完整矩形
+  const expectedCount = (maxRow - minRow + 1) * (maxCol - minCol + 1);
+  if (expectedCount !== selectedCells.length) {
+    return alert('Please select a full rectangle');
+  }
+
+  const table = document.getElementById('table');
+  const first = table.rows[minRow].cells[minCol];
+
+  let text = selectedCells.map(c => c.innerText).join(' ');
+
+  first.rowSpan = maxRow - minRow + 1;
+  first.colSpan = maxCol - minCol + 1;
   first.innerText = text;
 
-  for (let i = 1; i < selectedCells.length; i++) {
-    selectedCells[i].remove();
+  // 删除其余单元格
+  for (let r = minRow; r <= maxRow; r++) {
+    for (let c = minCol; c <= maxCol; c++) {
+      if (r === minRow && c === minCol) continue;
+      const row = table.rows[r];
+      if (row && row.cells[c]) row.cells[c].remove();
+    }
   }
 
   clearSelection();
@@ -172,30 +164,23 @@ function splitCell() {
   if (selectedCells.length !== 1) return alert('Select ONE cell');
 
   const cell = selectedCells[0];
-  const colSpan = cell.colSpan;
   const rowSpan = cell.rowSpan;
-  const row = cell.parentElement;
+  const colSpan = cell.colSpan;
+  const rowIndex = cell.parentElement.rowIndex;
+  const colIndex = cell.cellIndex;
+  const table = document.getElementById('table');
 
-  if (colSpan <= 1 && rowSpan <= 1) return alert('Not merged');
+  if (rowSpan === 1 && colSpan === 1) return alert('Not merged');
 
-  // 横向拆分
-  if (colSpan > 1) {
-    cell.colSpan = 1;
-    for (let i = 1; i < colSpan; i++) {
-      row.insertBefore(createCell('New'), cell.nextSibling);
-    }
-  }
+  cell.rowSpan = 1;
+  cell.colSpan = 1;
 
-  // 纵向拆分
-  if (rowSpan > 1) {
-    cell.rowSpan = 1;
-    let rowIndex = row.rowIndex;
-
-    for (let i = 1; i < rowSpan; i++) {
-      const targetRow = document.getElementById('table').rows[rowIndex + i];
-      if (targetRow) {
-        targetRow.insertBefore(createCell('New'), targetRow.cells[cell.cellIndex] || null);
-      }
+  // 补齐矩形
+  for (let r = 0; r < rowSpan; r++) {
+    const row = table.rows[rowIndex + r];
+    for (let c = 0; c < colSpan; c++) {
+      if (r === 0 && c === 0) continue;
+      row.insertBefore(createCell('New'), row.cells[colIndex + 1] || null);
     }
   }
 
