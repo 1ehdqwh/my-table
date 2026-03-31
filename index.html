@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Table Maker</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input { margin: 5px; padding: 5px; }
+    button { padding: 6px 12px; margin: 5px; cursor: pointer; }
+    table { margin-top: 20px; border-collapse: collapse; width: 100%; }
+    td, th { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    td { cursor: pointer; }
+    .selected { background-color: #d0ebff; }
+  </style>
+</head>
+<body>
+
+<h2>🧾 Table Maker (Rows & Cols + Auto Save)</h2>
+
+<label>Rows: </label>
+<input type="number" id="rows" value="3" min="1">
+
+<label>Columns: </label>
+<input type="number" id="cols" value="3" min="1">
+
+<br>
+<button onclick="createTable()">Create Table</button>
+
+<button onclick="addRow()">+ Row</button>
+<button onclick="deleteRow()">- Row</button>
+
+<button onclick="addCol()">+ Col</button>
+<button onclick="deleteCol()">- Col</button>
+
+<button onclick="mergeCells()">Merge</button>
+<button onclick="splitCell()">Split</button>
+
+<button onclick="clearStorage()">Clear Saved</button>
+
+<table id="table"></table>
+
+<script>
+let selectedCells = [];
+const STORAGE_KEY = 'table-maker-data-v2';
+
+function createTable() {
+  const rows = rowsInput();
+  const cols = colsInput();
+  const table = document.getElementById('table');
+
+  table.innerHTML = '';
+  selectedCells = [];
+
+  for (let i = 0; i < rows; i++) {
+    const tr = document.createElement('tr');
+    for (let j = 0; j < cols; j++) {
+      tr.appendChild(createCell(`R${i+1}C${j+1}`));
+    }
+    table.appendChild(tr);
+  }
+
+  saveTable();
+}
+
+function rowsInput(){return document.getElementById('rows').value}
+function colsInput(){return document.getElementById('cols').value}
+
+function createCell(text){
+  const td = document.createElement('td');
+  td.contentEditable = true;
+  td.innerText = text;
+
+  td.addEventListener('click', e => { e.stopPropagation(); toggleSelect(td); });
+  td.addEventListener('input', saveTable);
+
+  return td;
+}
+
+// ===== 行列操作 =====
+function addRow() {
+  const table = document.getElementById('table');
+  if (!table.rows.length) return;
+
+  const cols = table.rows[0].cells.length;
+  const tr = document.createElement('tr');
+
+  for (let i = 0; i < cols; i++) {
+    tr.appendChild(createCell('New'));
+  }
+
+  table.appendChild(tr);
+  saveTable();
+}
+
+function deleteRow() {
+  const table = document.getElementById('table');
+  if (table.rows.length > 0) {
+    table.deleteRow(-1);
+    saveTable();
+  }
+}
+
+function addCol() {
+  const table = document.getElementById('table');
+  for (let row of table.rows) {
+    row.appendChild(createCell('New'));
+  }
+  saveTable();
+}
+
+function deleteCol() {
+  const table = document.getElementById('table');
+  for (let row of table.rows) {
+    if (row.cells.length > 0) {
+      row.deleteCell(-1);
+    }
+  }
+  saveTable();
+}
+
+// ===== 选择 =====
+function toggleSelect(cell) {
+  if (selectedCells.includes(cell)) {
+    cell.classList.remove('selected');
+    selectedCells = selectedCells.filter(c => c !== cell);
+  } else {
+    cell.classList.add('selected');
+    selectedCells.push(cell);
+  }
+}
+
+// ===== 合并 =====
+function mergeCells() {
+  if (selectedCells.length < 2) return alert('Select at least 2 cells');
+
+  const first = selectedCells[0];
+  let text = selectedCells.map(c => c.innerText).join(' ');
+
+  first.colSpan = selectedCells.length;
+  first.innerText = text;
+
+  for (let i = 1; i < selectedCells.length; i++) {
+    selectedCells[i].remove();
+  }
+
+  clearSelection();
+  saveTable();
+}
+
+// ===== 拆分 =====
+function splitCell() {
+  if (selectedCells.length !== 1) return alert('Select ONE cell');
+
+  const cell = selectedCells[0];
+  const span = cell.colSpan;
+
+  if (span <= 1) return alert('Not merged');
+
+  cell.colSpan = 1;
+  const row = cell.parentElement;
+
+  for (let i = 1; i < span; i++) {
+    const newCell = createCell('New');
+    row.insertBefore(newCell, cell.nextSibling);
+  }
+
+  clearSelection();
+  saveTable();
+}
+
+function clearSelection() {
+  selectedCells.forEach(c => c.classList.remove('selected'));
+  selectedCells = [];
+}
+
+// ===== 保存 =====
+function saveTable() {
+  const table = document.getElementById('table');
+  const data = [];
+
+  for (let row of table.rows) {
+    const rowData = [];
+    for (let cell of row.cells) {
+      rowData.push({ text: cell.innerText, colSpan: cell.colSpan });
+    }
+    data.push(rowData);
+  }
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function loadTable() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return;
+
+  const data = JSON.parse(saved);
+  const table = document.getElementById('table');
+  table.innerHTML = '';
+
+  data.forEach(rowData => {
+    const tr = document.createElement('tr');
+    rowData.forEach(cellData => {
+      const td = createCell(cellData.text);
+      td.colSpan = cellData.colSpan || 1;
+      tr.appendChild(td);
+    });
+    table.appendChild(tr);
+  });
+}
+
+function clearStorage() {
+  localStorage.removeItem(STORAGE_KEY);
+  alert('Cleared');
+}
+
+window.onload = loadTable;
+document.body.addEventListener('click', clearSelection);
+</script>
+
+</body>
+</html>
