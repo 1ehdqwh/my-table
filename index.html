@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Academic Table - Comparison</title>
+  <title>Supplementary Experiments</title>
   <style>
     body {
-      font-family: "Times New Roman", Times, serif; /* 模拟论文常用字体 */
+      font-family: "Times New Roman", Times, serif;
       background-color: #fff;
       display: flex;
       justify-content: center;
@@ -14,57 +14,59 @@
 
     .table-container {
       width: 100%;
-      max-width: 900px;
-      text-align: center;
+      max-width: 850px;
     }
 
-    /* 表格标题样式 (Caption) */
     .caption {
       font-size: 1.1em;
-      margin-bottom: 12px;
+      margin-bottom: 15px;
       text-align: center;
     }
 
     .latex-table {
       width: 100%;
-      border-collapse: collapse; /* 必须：合并边框 */
-      margin: 0 auto;
-      color: #000;
+      border-collapse: collapse;
+      border-top: 2.2px solid black;
+      border-bottom: 2.2px solid black;
     }
 
-    /* Toprule - 顶线最粗 */
-    .latex-table {
-      border-top: 2px solid black;
-      border-bottom: 2px solid black; /* Bottomrule - 底线同样粗 */
-    }
-
-    /* Midrule - 表头下方的线稍细 */
+    /* 表头 */
     .latex-table thead th {
-      border-bottom: 1px solid black;
+      border-bottom: 1.1px solid black;
       padding: 10px 5px;
-      font-weight: normal; /* LaTeX 默认表头通常不加粗，看个人喜好 */
-    }
-
-    /* 模拟数据组之间的分隔线 (如 BraTS21 和 ACDC 之间) */
-    .mid-separator {
-      border-bottom: 1px solid black;
+      font-weight: normal;
     }
 
     .latex-table td {
       padding: 8px 5px;
-      vertical-align: middle;
     }
 
-    /* 文字加粗表示最佳结果 (模拟 \textbf) */
-    .bold {
-      font-weight: bold;
+    /* 数值列右对齐 */
+    .col-right { 
+      text-align: right; 
+      padding-right: 25px; /* 增加间距防止拥挤 */
     }
 
-    /* 左对齐第一二列，其余居中 */
-    .latex-table td:nth-child(1),
-    .latex-table td:nth-child(2) {
+    /* 模型列左对齐 */
+    .col-model { 
+      text-align: left; 
+      padding-left: 10px; 
+    }
+
+    /* 数据集列：核心对齐逻辑 */
+    .col-dataset {
       text-align: left;
-      padding-left: 15px;
+      padding-left: 10px;
+      vertical-align: middle; /* 垂直居中 */
+      font-weight: normal;
+    }
+
+    /* 最佳结果加粗 */
+    .bold { font-weight: bold; }
+
+    /* 中间分隔线样式 */
+    .group-divider td {
+      border-top: 1.1px solid black;
     }
   </style>
 </head>
@@ -72,91 +74,78 @@
 
 <div class="table-container">
   <div class="caption">
-    <strong>Table 1:</strong> Comparison of different models on MSD, BraTS2021, KiTS2023, and ACDC datasets.
+    <strong>Table 1:</strong> Supplementary Experiments on BraTS2021 and ACDC datasets.
   </div>
 
   <table class="latex-table">
     <thead>
       <tr>
-        <th>Dataset</th>
-        <th>Model</th>
-        <th>Dice1</th>
-        <th>Dice2</th>
-        <th>Dice3</th>
-        <th>Dice avg</th>
+        <th class="col-dataset" style="width: 15%;">Dataset</th>
+        <th class="col-model" style="width: 25%;">Model</th>
+        <th class="col-right">Dice1</th>
+        <th class="col-right">Dice2</th>
+        <th class="col-right">Dice3</th>
+        <th class="col-right">Dice avg</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td rowspan="4">BraTS21</td> <td>SegResNet</td>
-        <td>94.42</td>
-        <td>93.81</td>
-        <td>88.66</td>
-        <td>92.30</td>
+        <td class="col-dataset" rowspan="4">BraTS21</td> <td class="col-model">SegResNet</td>
+        <td class="col-right">94.42</td>
+        <td class="col-right">93.81</td>
+        <td class="col-right">88.66</td>
+        <td class="col-right">92.30</td>
       </tr>
       <tr>
-        <td>nnU-Net</td>
-        <td>94.26</td>
-        <td>93.54</td>
-        <td>88.50</td>
-        <td>92.10</td>
+        <td class="col-model">nnU-Net</td>
+        <td class="col-right">94.26</td>
+        <td class="col-right">93.54</td>
+        <td class="col-right">88.50</td>
+        <td class="col-right">92.10</td>
       </tr>
       <tr>
-        <td>FuseUNet</td>
-        <td>93.49</td>
-        <td>92.91</td>
-        <td>87.58</td>
-        <td>91.33</td>
+        <td class="col-model">FuseUNet</td>
+        <td class="col-right">93.49</td>
+        <td class="col-right">92.91</td>
+        <td class="col-right">87.58</td>
+        <td class="col-right">91.33</td>
       </tr>
-      <tr class="mid-separator"> <td>Ours</td>
-        <td>94.80</td>
-        <td>93.98</td>
-        <td>88.75</td>
-        <td class="bold">92.51</td>
+      <tr>
+        <td class="col-model">Ours</td>
+        <td class="col-right">94.80</td>
+        <td class="col-right">93.98</td>
+        <td class="col-right">88.75</td>
+        <td class="col-right bold">92.51</td>
       </tr>
 
-      <tr>
-        <td rowspan="6">ACDC</td>
-        <td>UNETR</td>
-        <td>93.95</td>
-        <td>92.37</td>
-        <td>94.44</td>
-        <td>93.58</td>
+      <tr class="group-divider">
+        <td class="col-dataset" rowspan="4">ACDC</td>
+        <td class="col-model">SegResNet</td>
+        <td class="col-right">95.59</td>
+        <td class="col-right">93.38</td>
+        <td class="col-right">96.85</td>
+        <td class="col-right">95.27</td>
       </tr>
       <tr>
-        <td>SegResNet</td>
-        <td>95.59</td>
-        <td>93.38</td>
-        <td>96.85</td>
-        <td>95.27</td>
+        <td class="col-model">nnU-Net</td>
+        <td class="col-right">96.22</td>
+        <td class="col-right">93.50</td>
+        <td class="col-right">97.12</td>
+        <td class="col-right bold">95.61</td>
       </tr>
       <tr>
-        <td>SwinUNETR</td>
-        <td>94.60</td>
-        <td>93.00</td>
-        <td>95.26</td>
-        <td>94.29</td>
+        <td class="col-model">FuseUNet</td>
+        <td class="col-right">95.53</td>
+        <td class="col-right">93.83</td>
+        <td class="col-right">96.23</td>
+        <td class="col-right">95.20</td>
       </tr>
       <tr>
-        <td>nnU-Net</td>
-        <td>96.22</td>
-        <td>93.50</td>
-        <td>97.12</td>
-        <td class="bold">95.61</td>
-      </tr>
-      <tr>
-        <td>FuseUNet</td>
-        <td>95.53</td>
-        <td>93.83</td>
-        <td>96.23</td>
-        <td>95.20</td>
-      </tr>
-      <tr>
-        <td>Ours</td>
-        <td>96.15</td>
-        <td>93.38</td>
-        <td>97.04</td>
-        <td>95.52</td>
+        <td class="col-model">Ours</td>
+        <td class="col-right">96.15</td>
+        <td class="col-right">93.38</td>
+        <td class="col-right">97.04</td>
+        <td class="col-right">95.52</td>
       </tr>
     </tbody>
   </table>
