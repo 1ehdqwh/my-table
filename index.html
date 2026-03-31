@@ -1,157 +1,166 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>Table Maker</title>
+  <title>Academic Table - Comparison</title>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    input { margin: 5px; padding: 5px; }
-    button { padding: 6px 12px; margin: 5px; cursor: pointer; }
-    table { margin-top: 20px; border-collapse: collapse; width: 100%; }
-    td, th { border: 1px solid #ccc; padding: 10px; text-align: center; vertical-align: middle; }
-    td { cursor: pointer; }
-    .selected { background-color: #d0ebff; }
+    body {
+      font-family: "Times New Roman", Times, serif; /* 模拟论文常用字体 */
+      background-color: #fff;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .table-container {
+      width: 100%;
+      max-width: 900px;
+      text-align: center;
+    }
+
+    /* 表格标题样式 (Caption) */
+    .caption {
+      font-size: 1.1em;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .latex-table {
+      width: 100%;
+      border-collapse: collapse; /* 必须：合并边框 */
+      margin: 0 auto;
+      color: #000;
+    }
+
+    /* Toprule - 顶线最粗 */
+    .latex-table {
+      border-top: 2px solid black;
+      border-bottom: 2px solid black; /* Bottomrule - 底线同样粗 */
+    }
+
+    /* Midrule - 表头下方的线稍细 */
+    .latex-table thead th {
+      border-bottom: 1px solid black;
+      padding: 10px 5px;
+      font-weight: normal; /* LaTeX 默认表头通常不加粗，看个人喜好 */
+    }
+
+    /* 模拟数据组之间的分隔线 (如 BraTS21 和 ACDC 之间) */
+    .mid-separator {
+      border-bottom: 1px solid black;
+    }
+
+    .latex-table td {
+      padding: 8px 5px;
+      vertical-align: middle;
+    }
+
+    /* 文字加粗表示最佳结果 (模拟 \textbf) */
+    .bold {
+      font-weight: bold;
+    }
+
+    /* 左对齐第一二列，其余居中 */
+    .latex-table td:nth-child(1),
+    .latex-table td:nth-child(2) {
+      text-align: left;
+      padding-left: 15px;
+    }
   </style>
 </head>
 <body>
 
-<h2>🧾 Table Maker (Stable Merge Fix)</h2>
+<div class="table-container">
+  <div class="caption">
+    <strong>Table 1:</strong> Comparison of different models on MSD, BraTS2021, KiTS2023, and ACDC datasets.
+  </div>
 
-<label>Rows: </label>
-<input type="number" id="rows" value="3" min="1">
-<label>Columns: </label>
-<input type="number" id="cols" value="3" min="1">
+  <table class="latex-table">
+    <thead>
+      <tr>
+        <th>Dataset</th>
+        <th>Model</th>
+        <th>Dice1</th>
+        <th>Dice2</th>
+        <th>Dice3</th>
+        <th>Dice avg</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td rowspan="4">BraTS21</td> <td>SegResNet</td>
+        <td>94.42</td>
+        <td>93.81</td>
+        <td>88.66</td>
+        <td>92.30</td>
+      </tr>
+      <tr>
+        <td>nnU-Net</td>
+        <td>94.26</td>
+        <td>93.54</td>
+        <td>88.50</td>
+        <td>92.10</td>
+      </tr>
+      <tr>
+        <td>FuseUNet</td>
+        <td>93.49</td>
+        <td>92.91</td>
+        <td>87.58</td>
+        <td>91.33</td>
+      </tr>
+      <tr class="mid-separator"> <td>Ours</td>
+        <td>94.80</td>
+        <td>93.98</td>
+        <td>88.75</td>
+        <td class="bold">92.51</td>
+      </tr>
 
-<br>
-<button onclick="createTable()">Create Table</button>
-<button onclick="mergeCells()">Merge</button>
-<button onclick="splitCell()">Split</button>
-
-<table id="table"></table>
-
-<script>
-let selectedCells = [];
-
-function createTable() {
-  const rows = document.getElementById('rows').value;
-  const cols = document.getElementById('cols').value;
-  const table = document.getElementById('table');
-
-  table.innerHTML = '';
-  selectedCells = [];
-
-  for (let i = 0; i < rows; i++) {
-    const tr = document.createElement('tr');
-    for (let j = 0; j < cols; j++) {
-      tr.appendChild(createCell(`R${i+1}C${j+1}`));
-    }
-    table.appendChild(tr);
-  }
-}
-
-function createCell(text){
-  const td = document.createElement('td');
-  td.contentEditable = true;
-  td.innerText = text;
-
-  td.addEventListener('click', e => { e.stopPropagation(); toggleSelect(td); });
-  return td;
-}
-
-function toggleSelect(cell) {
-  if (selectedCells.includes(cell)) {
-    cell.classList.remove('selected');
-    selectedCells = selectedCells.filter(c => c !== cell);
-  } else {
-    cell.classList.add('selected');
-    selectedCells.push(cell);
-  }
-}
-
-// ✅ 修复核心：禁止“二次合并已合并单元格”
-function mergeCells() {
-  if (selectedCells.length < 2) return alert('Select a rectangle');
-
-  // 🚨 关键修复点
-  for (let cell of selectedCells) {
-    if (cell.rowSpan > 1 || cell.colSpan > 1) {
-      return alert('Cannot merge already merged cells again (Excel rule)');
-    }
-  }
-
-  const positions = selectedCells.map(c => ({
-    cell: c,
-    row: c.parentElement.rowIndex,
-    col: c.cellIndex
-  }));
-
-  const rows = positions.map(p => p.row);
-  const cols = positions.map(p => p.col);
-
-  const minRow = Math.min(...rows);
-  const maxRow = Math.max(...rows);
-  const minCol = Math.min(...cols);
-  const maxCol = Math.max(...cols);
-
-  const expected = (maxRow - minRow + 1) * (maxCol - minCol + 1);
-  if (expected !== selectedCells.length) {
-    return alert('Must select full rectangle');
-  }
-
-  const table = document.getElementById('table');
-  const first = table.rows[minRow].cells[minCol];
-
-  first.rowSpan = maxRow - minRow + 1;
-  first.colSpan = maxCol - minCol + 1;
-
-  let text = selectedCells.map(c => c.innerText).join(' ');
-  first.innerText = text;
-
-  // ⚠️ 从后往前删，避免 index 错乱
-  for (let r = maxRow; r >= minRow; r--) {
-    for (let c = maxCol; c >= minCol; c--) {
-      if (r === minRow && c === minCol) continue;
-      const row = table.rows[r];
-      if (row && row.cells[c]) row.deleteCell(c);
-    }
-  }
-
-  clearSelection();
-}
-
-function splitCell() {
-  if (selectedCells.length !== 1) return alert('Select ONE cell');
-
-  const cell = selectedCells[0];
-  const rowSpan = cell.rowSpan;
-  const colSpan = cell.colSpan;
-  const rowIndex = cell.parentElement.rowIndex;
-  const colIndex = cell.cellIndex;
-  const table = document.getElementById('table');
-
-  if (rowSpan === 1 && colSpan === 1) return alert('Not merged');
-
-  cell.rowSpan = 1;
-  cell.colSpan = 1;
-
-  for (let r = 0; r < rowSpan; r++) {
-    const row = table.rows[rowIndex + r];
-    for (let c = 0; c < colSpan; c++) {
-      if (r === 0 && c === 0) continue;
-      row.insertBefore(createCell('New'), row.cells[colIndex + 1] || null);
-    }
-  }
-
-  clearSelection();
-}
-
-function clearSelection() {
-  selectedCells.forEach(c => c.classList.remove('selected'));
-  selectedCells = [];
-}
-
-document.body.addEventListener('click', clearSelection);
-</script>
+      <tr>
+        <td rowspan="6">ACDC</td>
+        <td>UNETR</td>
+        <td>93.95</td>
+        <td>92.37</td>
+        <td>94.44</td>
+        <td>93.58</td>
+      </tr>
+      <tr>
+        <td>SegResNet</td>
+        <td>95.59</td>
+        <td>93.38</td>
+        <td>96.85</td>
+        <td>95.27</td>
+      </tr>
+      <tr>
+        <td>SwinUNETR</td>
+        <td>94.60</td>
+        <td>93.00</td>
+        <td>95.26</td>
+        <td>94.29</td>
+      </tr>
+      <tr>
+        <td>nnU-Net</td>
+        <td>96.22</td>
+        <td>93.50</td>
+        <td>97.12</td>
+        <td class="bold">95.61</td>
+      </tr>
+      <tr>
+        <td>FuseUNet</td>
+        <td>95.53</td>
+        <td>93.83</td>
+        <td>96.23</td>
+        <td>95.20</td>
+      </tr>
+      <tr>
+        <td>Ours</td>
+        <td>96.15</td>
+        <td>93.38</td>
+        <td>97.04</td>
+        <td>95.52</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
 </body>
 </html>
