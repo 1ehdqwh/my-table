@@ -8,14 +8,14 @@
     input { margin: 5px; padding: 5px; }
     button { padding: 6px 12px; margin: 5px; cursor: pointer; }
     table { margin-top: 20px; border-collapse: collapse; width: 100%; }
-    td, th { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    td, th { border: 1px solid #ccc; padding: 10px; text-align: center; vertical-align: middle; }
     td { cursor: pointer; }
     .selected { background-color: #d0ebff; }
   </style>
 </head>
 <body>
 
-<h2>🧾 Table Maker (Rows & Cols + Auto Save)</h2>
+<h2>🧾 Table Maker (Improved Merge)</h2>
 
 <label>Rows: </label>
 <input type="number" id="rows" value="3" min="1">
@@ -41,7 +41,7 @@
 
 <script>
 let selectedCells = [];
-const STORAGE_KEY = 'table-maker-data-v2';
+const STORAGE_KEY = 'table-maker-data-v3';
 
 function createTable() {
   const rows = rowsInput();
@@ -129,14 +129,34 @@ function toggleSelect(cell) {
   }
 }
 
-// ===== 合并 =====
+// ===== 合并（支持上下 & 左右） =====
 function mergeCells() {
   if (selectedCells.length < 2) return alert('Select at least 2 cells');
+
+  // 获取所有行列索引
+  const positions = selectedCells.map(cell => {
+    const row = cell.parentElement.rowIndex;
+    const col = cell.cellIndex;
+    return { cell, row, col };
+  });
+
+  const rows = [...new Set(positions.map(p => p.row))];
+  const cols = [...new Set(positions.map(p => p.col))];
 
   const first = selectedCells[0];
   let text = selectedCells.map(c => c.innerText).join(' ');
 
-  first.colSpan = selectedCells.length;
+  // 判断方向
+  if (rows.length === 1) {
+    // 横向合并
+    first.colSpan = selectedCells.length;
+  } else if (cols.length === 1) {
+    // 纵向合并
+    first.rowSpan = selectedCells.length;
+  } else {
+    return alert('Please select cells in one row OR one column');
+  }
+
   first.innerText = text;
 
   for (let i = 1; i < selectedCells.length; i++) {
@@ -152,16 +172,31 @@ function splitCell() {
   if (selectedCells.length !== 1) return alert('Select ONE cell');
 
   const cell = selectedCells[0];
-  const span = cell.colSpan;
-
-  if (span <= 1) return alert('Not merged');
-
-  cell.colSpan = 1;
+  const colSpan = cell.colSpan;
+  const rowSpan = cell.rowSpan;
   const row = cell.parentElement;
 
-  for (let i = 1; i < span; i++) {
-    const newCell = createCell('New');
-    row.insertBefore(newCell, cell.nextSibling);
+  if (colSpan <= 1 && rowSpan <= 1) return alert('Not merged');
+
+  // 横向拆分
+  if (colSpan > 1) {
+    cell.colSpan = 1;
+    for (let i = 1; i < colSpan; i++) {
+      row.insertBefore(createCell('New'), cell.nextSibling);
+    }
+  }
+
+  // 纵向拆分
+  if (rowSpan > 1) {
+    cell.rowSpan = 1;
+    let rowIndex = row.rowIndex;
+
+    for (let i = 1; i < rowSpan; i++) {
+      const targetRow = document.getElementById('table').rows[rowIndex + i];
+      if (targetRow) {
+        targetRow.insertBefore(createCell('New'), targetRow.cells[cell.cellIndex] || null);
+      }
+    }
   }
 
   clearSelection();
@@ -181,7 +216,7 @@ function saveTable() {
   for (let row of table.rows) {
     const rowData = [];
     for (let cell of row.cells) {
-      rowData.push({ text: cell.innerText, colSpan: cell.colSpan });
+      rowData.push({ text: cell.innerText, colSpan: cell.colSpan, rowSpan: cell.rowSpan });
     }
     data.push(rowData);
   }
@@ -202,6 +237,7 @@ function loadTable() {
     rowData.forEach(cellData => {
       const td = createCell(cellData.text);
       td.colSpan = cellData.colSpan || 1;
+      td.rowSpan = cellData.rowSpan || 1;
       tr.appendChild(td);
     });
     table.appendChild(tr);
