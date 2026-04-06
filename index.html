@@ -2,19 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Supplementary Experiments</title>
+  <title>Supplementary Experiments and Ablation Study</title>
   <style>
     body {
       font-family: "Times New Roman", Times, serif;
       background-color: #fff;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
       padding: 40px 20px;
+      line-height: 1.5;
     }
 
     .table-container {
       width: 100%;
-      max-width: 850px;
+      max-width: 900px;
+      margin-bottom: 50px;
     }
 
     .caption {
@@ -33,7 +36,7 @@
     /* 表头 */
     .latex-table thead th {
       border-bottom: 1.1px solid black;
-      padding: 10px 5px;
+      padding: 12px 5px;
       font-weight: normal;
     }
 
@@ -44,7 +47,8 @@
     /* 数值列右对齐 */
     .col-right { 
       text-align: right; 
-      padding-right: 25px; /* 增加间距防止拥挤 */
+      padding-right: 15px;
+      white-space: nowrap;
     }
 
     /* 模型列左对齐 */
@@ -53,100 +57,161 @@
       padding-left: 10px; 
     }
 
-    /* 数据集列：核心对齐逻辑 */
+    /* 数据集列 */
     .col-dataset {
       text-align: left;
       padding-left: 10px;
-      vertical-align: middle; /* 垂直居中 */
-      font-weight: normal;
+      vertical-align: middle;
+      font-weight: bold;
     }
 
     /* 最佳结果加粗 */
     .bold { font-weight: bold; }
 
-    /* 中间分隔线样式 */
+    /* 分隔线 */
     .group-divider td {
       border-top: 1.1px solid black;
     }
+
+    /* Table 2 特有样式 */
+    .col-center { text-align: center; }
   </style>
 </head>
 <body>
 
 <div class="table-container">
   <div class="caption">
-    <strong>Table 1:</strong> Supplementary Experiments on BraTS2021 and ACDC datasets.
+    <strong>Table 1:</strong> Supplementary experiments of 1000 epochs on BraTS21, KiTS23, and ACDC datasets.
   </div>
 
   <table class="latex-table">
     <thead>
       <tr>
-        <th class="col-dataset" style="width: 15%;">Dataset</th>
-        <th class="col-model" style="width: 25%;">Model</th>
-        <th class="col-right">Dice1</th>
-        <th class="col-right">Dice2</th>
-        <th class="col-right">Dice3</th>
-        <th class="col-right">Dice avg</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td class="col-dataset" rowspan="4">BraTS21</td> <td class="col-model">SegResNet</td>
-        <td class="col-right">95.42</td>
-        <td class="col-right">95.07</td>
-        <td class="col-right">90.22</td>
-        <td class="col-right">93.57</td>
+        <td class="col-dataset" rowspan="4">BraTS21</td> 
+        <td class="col-model">SegResNet</td>
+        <td class="col-right">95.42±0.21</td>
+        <td class="col-right">95.07±0.34</td>
+        <td class="col-right">90.22±0.45</td>
+        <td class="col-right">93.57±0.18</td>
       </tr>
       <tr>
         <td class="col-model">nnU-Net</td>
-        <td class="col-right">95.26</td>
-        <td class="col-right">94.90</td>
-        <td class="col-right">89.95</td>
-        <td class="col-right">93.37</td>
+        <td class="col-right">95.26±0.15</td>
+        <td class="col-right">94.90±0.28</td>
+        <td class="col-right">89.95±0.41</td>
+        <td class="col-right">93.37±0.22</td>
       </tr>
       <tr>
         <td class="col-model">FuseUNet</td>
-        <td class="col-right">95.41</td>
-        <td class="col-right">95.22</td>
-        <td class="col-right">90.17</td>
-        <td class="col-right">93.60</td>
+        <td class="col-right">95.41±0.33</td>
+        <td class="col-right">95.22±0.12</td>
+        <td class="col-right">90.17±0.37</td>
+        <td class="col-right">93.60±0.25</td>
       </tr>
       <tr>
         <td class="col-model">Ours</td>
-        <td class="col-right">95.55</td>
-        <td class="col-right">95.36</td>
-        <td class="col-right">90.35</td>
-        <td class="col-right bold">93.75</td>
+        <td class="col-right">95.55±0.19</td>
+        <td class="col-right">95.36±0.24</td>
+        <td class="col-right">90.35±0.31</td>
+        <td class="col-right bold">93.75±0.14</td>
+      </tr>
+
+      <tr class="group-divider">
+        <td class="col-dataset" rowspan="3">KiTS23</td>
+        <td class="col-model">nnU-Net</td>
+        <td class="col-right">95.41±0.42</td>
+        <td class="col-right">83.73±0.39</td>
+        <td class="col-right">80.20±0.48</td>
+        <td class="col-right">86.44±0.31</td>
+      </tr>
+      <tr>
+        <td class="col-model">FuseUNet</td>
+        <td class="col-right">95.49±0.38</td>
+        <td class="col-right">83.92±0.45</td>
+        <td class="col-right">80.51±0.47</td>
+        <td class="col-right">86.64±0.42</td>
+      </tr>
+      <tr>
+        <td class="col-model">Ours</td>
+        <td class="col-right">95.65±0.22</td>
+        <td class="col-right">84.01±0.31</td>
+        <td class="col-right">80.92±0.28</td>
+        <td class="col-right bold">86.89±0.19</td>
       </tr>
 
       <tr class="group-divider">
         <td class="col-dataset" rowspan="4">ACDC</td>
         <td class="col-model">SegResNet</td>
-        <td class="col-right">96.98</td>
-        <td class="col-right">94.71</td>
-        <td class="col-right">97.73</td>
-        <td class="col-right">96.47</td>
+        <td class="col-right">96.98±0.12</td>
+        <td class="col-right">94.71±0.24</td>
+        <td class="col-right">97.73±0.09</td>
+        <td class="col-right">96.47±0.21</td>
       </tr>
       <tr>
         <td class="col-model">nnU-Net</td>
-        <td class="col-right">97.60</td>
-        <td class="col-right">96.00</td>
-        <td class="col-right">98.26</td>
-        <td class="col-right bold">97.29</td>
+        <td class="col-right">97.60±0.08</td>
+        <td class="col-right">96.00±0.12</td>
+        <td class="col-right">98.26±0.05</td>
+        <td class="col-right bold">97.29±0.15</td>
       </tr>
       <tr>
         <td class="col-model">FuseUNet</td>
-        <td class="col-right">97.59</td>
-        <td class="col-right">95.75</td>
-        <td class="col-right">98.25</td>
-        <td class="col-right">97.12</td>
+        <td class="col-right">97.59±0.14</td>
+        <td class="col-right">95.75±0.17</td>
+        <td class="col-right">98.25±0.11</td>
+        <td class="col-right">97.20±0.18</td>
       </tr>
       <tr>
         <td class="col-model">Ours</td>
-        <td class="col-right">97.59</td>
-        <td class="col-right">95.98</td>
-        <td class="col-right">98.25</td>
-        <td class="col-right">97.27</td>
+        <td class="col-right">97.59±0.11</td>
+        <td class="col-right">95.98±0.29</td>
+        <td class="col-right">98.25±0.08</td>
+        <td class="col-right">97.27±0.12</td>
       </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="table-container">
+  <div class="caption">
+    <strong>Table 2:</strong> Ablation study on the proposed decoder. 
+  </div>
+
+  <table class="latex-table">
+    <thead>
+      <tr>
+        <th class="col-model">Models</th>
+        <th class="col-center">Params (M)</th>
+        <th class="col-center">GFLOPs</th>
+        <th class="col-center">Avg Dice (%)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="col-model">Single Sigma</td>
+        <td class="col-center">15.1</td>
+        <td class="col-center">1704</td>
+        <td class="col-center">81.01±0.26</td>
+      </tr>
+      <tr>
+        <td class="col-model">Five Sigma</td>
+        <td class="col-center">15.1</td>
+        <td class="col-center">5143</td>
+        <td class="col-center">82.68±0.25</td>
+      </tr>
+      <tr>
+        <td class="col-model bold">Seven Sigma</td>
+        <td class="col-center bold">15.1</td>
+        <td class="col-center bold">6859</td>
+        <td class="col-center bold">82.93±0.18</td>
+      </tr>
+      <tr>
+        <td class="col-model">SigmaSDENet (Ours)</td>
+        <td class="col-center">15.1</td>
+        <td class="col-center">3420</td>
+        <td class="col-center">82.46±0.25</td>
+      </tr>
+
     </tbody>
   </table>
 </div>
